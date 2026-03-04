@@ -1,0 +1,16 @@
+# Large genomic data files
+data_raw/*.vcf.gz
+data_raw/*.vcf.gz.tbi
+data_raw/*.vcf.gz.csi
+
+# Tool binaries/archives
+*.zip
+
+# PLINK binary/intermediate files
+data_qc/*.bed
+data_qc/*.bim
+data_qc/*.fam
+data_qc/*.log
+
+# Logs
+logs/

@@ -1,0 +1,23 @@
+PLINK v2.0.0-a.7 M1 (28 Feb 2026)
+Options in effect:
+  --bfile ../data_qc/chr22_qc
+  --make-king-table
+  --out ../results/plink_king
+
+Hostname: Sergis-Air.lan1
+Working directory: /Users/sergimarsol/Desktop/UCSD/Winter 2026/Bioinformatics/project/cse284-final-project/data_raw
+Start time: Wed Mar  4 10:49:16 2026
+
+Random number seed: 1772650156
+16384 MiB RAM detected; reserving 8192 MiB for main workspace.
+Using up to 8 compute threads.
+230 samples (0 females, 0 males, 230 ambiguous; 230 founders) loaded from
+../data_qc/chr22_qc.fam.
+118164 variants loaded from ../data_qc/chr22_qc.bim.
+Note: No phenotype data present.
+--make-king-table pass 1/1: Scanning for rare variants... done.
+0 variants handled by initial scan (118164 remaining).
+--make-king-table: 118164 variants processed.
+Results written to ../results/plink_king.kin0 .
+
+End time: Wed Mar  4 10:49:16 2026
