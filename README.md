@@ -456,4 +456,166 @@ Comparison metrics will include:
 
 ## Method 3: Refined IBD (Beagle)
 
-*To be completed.*
+### Approach
+
+Refined IBD is a haplotype-based method for detecting **identity-by-descent (IBD) segments** using a probabilistic model of haplotype frequencies. The method evaluates whether two haplotypes share a genomic region inherited from a recent common ancestor by computing likelihood scores for candidate shared segments.
+
+Because Refined IBD operates on **phased haplotypes**, genotype data must first be phased before IBD detection can be performed. In this project, phasing was performed using **Beagle**, which infers haplotype phase and imputes missing genotype values using localized haplotype clustering.
+
+After phasing, the Refined IBD algorithm scans the phased haplotypes to identify candidate IBD segments and reports genomic coordinates, likelihood scores, and estimated segment lengths in centimorgans (cM). These segment-level outputs allow direct comparison with other haplotype-based methods such as **GERMLINE2**.
+
+---
+
+### Phasing with Beagle
+
+Genotypes were phased using **Beagle v5**. The chromosome 22 VCF containing the selected 1000 Genomes samples was used as input.
+
+The phasing step was executed with the following command:
+
+```bash
+java -Xmx8g -jar beagle.27Feb25.75f.jar \
+  gt=data_raw/chr22_subset.vcf.gz \
+  out=results/beagle/chr22_phased \
+  nthreads=8
+```
+
+This produced the phased VCF file:
+
+```
+results/beagle/chr22_phased.vcf.gz
+```
+
+Phased genotypes are represented using the `|` separator to indicate haplotype phase. For example:
+
+```
+0|1
+```
+
+indicates that the reference allele is present on one haplotype and the alternate allele on the other.
+
+---
+
+### Running Refined IBD
+
+IBD segments were detected using the Refined IBD implementation developed by Browning & Browning.
+
+The algorithm was executed using the phased VCF produced by Beagle:
+
+```bash
+java -Xmx16g -jar refined-ibd.17Jan20.102.jar \
+  gt=results/beagle/chr22_phased.vcf.gz \
+  out=results/refinedibd/chr22_refinedibd \
+  nthreads=8 \
+  lod=1.0 \
+  length=0.5
+```
+
+Key parameters:
+
+| Parameter  | Description                                                  |
+| ---------- | ------------------------------------------------------------ |
+| `lod`      | Minimum log-odds score required for reporting an IBD segment |
+| `length`   | Minimum segment length in centimorgans                       |
+| `nthreads` | Number of CPU threads used                                   |
+
+Because the analysis was restricted to **chromosome 22**, a relatively small genomic region, the minimum segment length threshold was set to **0.5 cM** to capture shorter segments that might otherwise be excluded.
+
+No external recombination map was provided; therefore Refined IBD approximated genetic distance using the default assumption:
+
+```
+1 cM ≈ 1 Mb
+```
+
+---
+
+### Output Format
+
+Refined IBD outputs detected segments in the compressed file:
+
+```
+results/refinedibd/chr22_refinedibd.ibd.gz
+```
+
+Each row represents a detected IBD segment and contains the following fields:
+
+| Column     | Description                   |
+| ---------- | ----------------------------- |
+| Sample1    | First individual              |
+| Hap1       | Haplotype index               |
+| Sample2    | Second individual             |
+| Hap2       | Haplotype index               |
+| Chromosome | Chromosome number             |
+| Start      | Segment start position (bp)   |
+| End        | Segment end position (bp)     |
+| LOD        | Log-odds score supporting IBD |
+| Length     | Segment length (cM)           |
+
+Example output:
+
+```
+NA18923 1 NA18507 2 22 28470074 29055755 13.28 0.586
+```
+
+This indicates a shared haplotype segment approximately **0.586 cM long** on chromosome 22.
+
+---
+
+### Results
+
+Refined IBD detected a small number of short IBD segments among the analyzed individuals.
+
+| Metric                      | Value                |
+| --------------------------- | -------------------- |
+| Total IBD segments detected | **10**               |
+| Segment length range        | **0.509 – 0.692 cM** |
+| Mean segment length         | ~0.59 cM             |
+| Chromosome analyzed         | 22                   |
+| Number of samples           | 230                  |
+
+The limited number of detected segments is expected because the 1000 Genomes samples are largely **unrelated individuals**, and the analysis considers only a single chromosome.
+
+---
+
+### Computational Performance
+
+Refined IBD was computationally efficient for the chromosome 22 dataset.
+
+| Step                  | Runtime     | Threads |
+| --------------------- | ----------- | ------- |
+| Beagle phasing        | ~10 seconds | 8       |
+| Refined IBD detection | ~1 minute   | 8       |
+
+Most of the runtime was spent constructing the haplotype model used during IBD inference.
+
+---
+
+### Metrics for Benchmarking
+
+Refined IBD produces **segment-level IBD calls**, which allow detailed comparison with other haplotype-based methods such as GERMLINE2.
+
+From the detected segments we compute the following statistics:
+
+| Metric                      | Description                       |
+| --------------------------- | --------------------------------- |
+| Segment count per pair      | Number of shared IBD segments     |
+| Segment length distribution | Distribution of segment lengths   |
+| Total shared length         | Sum of segment lengths per pair   |
+| Maximum segment length      | Longest segment detected per pair |
+
+These metrics can be aggregated at the **pair level**, enabling comparison with PLINK’s pairwise relatedness measures (e.g., PI_HAT).
+
+---
+
+### Role in the Benchmark
+
+Refined IBD represents a **probabilistic haplotype-based approach** to IBD detection.
+
+In the context of this project:
+
+| Method          | Approach                                      | Output              |
+| --------------- | --------------------------------------------- | ------------------- |
+| **PLINK**       | Allele-frequency–based relatedness estimation | Pairwise statistics |
+| **GERMLINE2**   | Deterministic haplotype matching              | IBD segments        |
+| **Refined IBD** | Probabilistic haplotype inference             | IBD segments        |
+
+Together, these methods allow comparison between **frequency-based and haplotype-based approaches to relative detection**.
