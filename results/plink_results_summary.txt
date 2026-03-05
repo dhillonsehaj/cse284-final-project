@@ -1,0 +1,117 @@
+================================================================================
+         PLINK Relative Finding — Results Summary
+================================================================================
+
+Tool versions:
+  PLINK2  v2.0.0-a.7 M1 (28 Feb 2026)   → KING kinship (--make-king-table)
+  PLINK1  v1.9.0-b.7.11  (19 Aug 2025)   → IBD proportions (--genome)
+
+Input data:
+  Samples:    230 individuals (chr22 subset of 1000 Genomes)
+  Variants:   118,164 biallelic QC'd SNPs on chromosome 22
+  Source:     data_qc/chr22_qc.bed / .bim / .fam
+
+================================================================================
+  1. KINSHIP ESTIMATES  (plink_king.kin0)
+================================================================================
+
+Method:       KING-robust kinship estimator (PLINK2 --make-king-table)
+Total pairs:  26,335
+
+Summary statistics:
+  Mean kinship:   -0.1550
+  Max kinship:     0.0932
+  Min kinship:    -0.4720
+
+Detected related pairs by degree:
+  3rd degree+ (kinship > 0.0442):   255 pairs
+  2nd degree+ (kinship > 0.0884):     0 pairs
+  1st degree+ (kinship > 0.177):      0 pairs
+  Duplicates  (kinship > 0.354):      0 pairs
+
+Interpretation: No close relatives (1st/2nd degree) detected.
+                255 pairs exceed the 3rd-degree threshold, consistent with
+                population substructure among 1000 Genomes samples rather
+                than true recent relatedness.
+
+================================================================================
+  2. IBD PROPORTIONS  (chr22_genome.genome)
+================================================================================
+
+Method:       Method-of-moments IBD estimation (PLINK 1.9 --genome)
+Total pairs:  26,335
+
+Columns produced: Z0, Z1, Z2, PI_HAT, DST, PPC, RATIO
+
+PI_HAT summary statistics:
+  Mean PI_HAT:   0.0384
+  Max PI_HAT:    0.3012
+  Min PI_HAT:    0.0000
+
+Pairs by PI_HAT threshold:
+  PI_HAT > 0      :  6,521 pairs
+  PI_HAT > 0.05   :  5,260 pairs (approx. — non-trivial sharing)
+  PI_HAT > 0.125  :  4,530 pairs
+  PI_HAT > 0.25   :    277 pairs
+
+Interpretation: PI_HAT values indicate genome-wide IBD sharing proportions.
+                The Z0/Z1/Z2 values distinguish relationship types:
+                  Parent-child:   Z0 ≈ 0,    Z1 ≈ 1,    Z2 ≈ 0
+                  Full siblings:  Z0 ≈ 0.25, Z1 ≈ 0.5,  Z2 ≈ 0.25
+                  Half-siblings:  Z0 ≈ 0.5,  Z1 ≈ 0.5,  Z2 ≈ 0
+                  First cousins:  Z0 ≈ 0.75, Z1 ≈ 0.25, Z2 ≈ 0
+                  Unrelated:      Z0 ≈ 1,    Z1 ≈ 0,    Z2 ≈ 0
+
+================================================================================
+  3. COMPUTATIONAL PERFORMANCE
+================================================================================
+
+PLINK2 KING (--make-king-table):
+  Start:    Wed Mar  4 10:49:16 2026
+  End:      Wed Mar  4 10:49:16 2026
+  Runtime:  < 1 second
+  Memory:   8,192 MiB reserved (16,384 MiB detected)
+  Threads:  up to 8
+
+PLINK 1.9 --genome:
+  Start:    Wed Mar  4 11:54:33 2026
+  End:      Wed Mar  4 11:54:33 2026
+  Runtime:  < 1 second
+  Memory:   8,192 MB reserved (16,384 MB detected)
+  Threads:  up to 8
+
+================================================================================
+  4. METRICS AVAILABLE FOR BENCHMARKING vs GERMLINE / Refined IBD
+================================================================================
+
+Metric                                  Available?   Source
+------                                  ----------   ------
+Kinship estimate per pair               YES          plink_king.kin0 → KINSHIP
+Total IBD sharing per pair (PI_HAT)     YES          chr22_genome.genome → PI_HAT
+P(IBD=0) per pair                       YES          chr22_genome.genome → Z0
+P(IBD=1) per pair                       YES          chr22_genome.genome → Z1
+P(IBD=2) per pair                       YES          chr22_genome.genome → Z2
+Number of detected IBD pairs            YES          Derived from thresholds
+IBS distance                            YES          chr22_genome.genome → DST
+Runtime                                 YES          Log files
+Memory usage                            YES          Log files (reserved)
+Number of IBD segments                  NO           PLINK does not detect segments
+Segment lengths / distributions         NO           PLINK does not detect segments
+Genomic overlap / Jaccard similarity    NO           PLINK does not detect segments
+
+Note: PLINK provides pair-level IBD summary metrics (Z0, Z1, Z2, PI_HAT) that
+      are directly comparable to the aggregated pair-level outputs of GERMLINE
+      and Refined IBD. Segment-level comparisons are not possible with PLINK
+      and will only be evaluated between GERMLINE and Refined IBD.
+
+================================================================================
+  5. OUTPUT FILES
+================================================================================
+
+results/plink_king.kin0         PLINK2 KING kinship table (tab-delimited)
+results/plink_king.log          PLINK2 KING log file
+results/chr22_genome.genome     PLINK 1.9 IBD proportions (space-delimited)
+results/chr22_genome.log        PLINK 1.9 --genome log file
+results/chr22_genome.nosex      Samples with ambiguous sex (all 230)
+results/results_guide.txt       Column definitions and format guide
+results/plink_results_summary.txt   This file
