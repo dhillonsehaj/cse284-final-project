@@ -137,9 +137,320 @@ PLINK provides the following **pair-level metrics** that are directly comparable
 
 ---
 
-## Method 2: GERMLINE
+## Method 2: GERMLINE2
 
-*To be completed.*
+### Approach
+
+GERMLINE2 is a haplotype-based method for detecting **identity-by-descent (IBD) segments**, defined as genomic regions shared between individuals due to inheritance from a recent common ancestor. The software identifies long shared haplotypes by first locating short exact matches between haplotypes (seeds) and then extending them across neighboring markers while allowing a limited number of mismatches. Segments exceeding a user-specified minimum genetic length are reported as candidate IBD segments.
+
+GERMLINE2 is designed to scale efficiently to large genomic datasets by using a hash-based search strategy that identifies candidate matches before extending them into full segments. The algorithm outputs genomic coordinates for each detected segment, enabling detailed analysis of IBD segment lengths, counts, and genomic distribution.
+
+Unlike PLINK’s allele-frequency–based approach, GERMLINE2 operates on **phased haplotype data** and therefore provides explicit **segment-level information** rather than only pairwise relatedness coefficients.
+
+For this project we used the open-source implementation available from the Gusev Lab:
+
+- **GERMLINE2**
+- Repository: https://github.com/gusevlab/germline2
+
+The source code was downloaded and compiled locally using:
+git clone https://github.com/gusevlab/germline2
+cd germline2
+make
+
+This produces the executable `g2`, which performs IBD detection on phased haplotype input files.
+
+### Data Preparation
+
+GERMLINE2 requires phased haplotypes in **SHAPEIT/IMPUTE `.haps` format**, along with a `.sample` file containing sample identifiers and a genetic map specifying marker positions and genetic distances.
+
+The starting dataset consisted of chromosome 22 genotype data derived from the 1000 Genomes Project samples after quality control.
+
+#### Generating the no-missing VCF
+
+GERMLINE2 requires haplotype input without missing genotype calls. To satisfy this requirement, we filtered our dataset to remove any variants containing missing genotypes across the samples.
+
+Starting from the filtered dataset:
+
+`chr22_subset_biallelic.vcf`
+
+which contains only biallelic SNPs from chromosome 22, we removed sites with missing genotype calls using **bcftools**.
+bcftools view -g ^miss \
+chr22_subset_biallelic.vcf \
+-o chr22_subset_biallelic_nomiss.vcf
+
+This filtering step removes any variants with missing genotype values in any sample.
+
+The resulting file `chr22_subset_biallelic_nomiss.vcf` contains **1,110,240 SNPs across 230 individuals**, with complete genotype information for every marker.
+
+---
+
+#### Converting the VCF to haplotype format
+
+The filtered VCF was converted to SHAPEIT-style haplotype and sample files using `bcftools convert`:
+bcftools convert --hapsample chr22_g2 chr22_subset_biallelic_nomiss.vcf
+
+This produced two files:
+
+| File | Description |
+|-----|-------------|
+| `chr22_g2.haps` | Phased haplotypes |
+| `chr22_g2.sample` | Sample identifiers |
+
+---
+
+#### Constructing the genetic map
+
+GERMLINE2 requires a genetic map with three columns:
+physical_position cm/Mb cumulative_cM
+
+Because a recombination map was used during initial testing, we approximated genetic distance using physical position in megabases:
+**cM ≈ physical_position / 1,000,000**
+
+The map was generated using:
+awk '{pos=$3; cm=pos/1000000.0; print pos,1,cm}' chr22_g2.haps > chr22_g2.map
+
+The resulting map spans approximately **35.2 cM** across chromosome 22.
+
+---
+
+### Commands
+
+GERMLINE2 was run in two configurations.
+
+#### Diploid segment detection
+
+This run identifies IBD segments between individuals without distinguishing haplotypes.
+./g2 -m 1.0 -g 2 -d 1 -f 0.05 \
+data_raw/chr22_g2.haps \
+data_raw/chr22_g2.sample \
+data_raw/chr22_g2.map \
+data_raw/chr22_g2_out 
+
+Parameter descriptions:
+
+| Parameter | Description |
+|-----------|-------------|
+| `-m` | Minimum segment length (cM) |
+| `-g` | Maximum allowed gaps |
+| `-d` | Dynamic seed threshold |
+| `-f` | Minor allele frequency filter |
+
+---
+
+#### Haploid mode (IBD state estimation)
+
+To estimate **IBD state probabilities**, we also ran GERMLINE2 in haploid mode, which restricts matches to the same haplotype:
+./g2 -h -m 0.2 -g 6 -d 1 -f 0.05 \
+data_raw/chr22_g2.haps \
+data_raw/chr22_g2.sample \
+data_raw/chr22_g2.map \
+data_raw/chr22_g2_out_hap
+
+In haploid mode, output identifiers include `.0` or `.1` suffixes indicating which haplotype participated in the match.
+
+---
+
+### Post-processing and Analysis Script
+
+To summarize and compare GERMLINE2 results with other methods, we implemented a Python script:
+
+`analyze_germline2.py`
+
+This script parses GERMLINE2 output files and computes **pairwise IBD statistics** comparable to those produced by PLINK.
+
+---
+
+#### Input parsing
+
+The script reads the following inputs:
+
+| Input | Description |
+|------|-------------|
+| GERMLINE2 diploid output | Segment-level IBD results between individuals |
+| GERMLINE2 haploid output | Haplotypic IBD segments used to infer IBD states |
+| Genetic map | Used to estimate chromosome length in centimorgans |
+| Sample file | Used to construct the list of individuals |
+
+The script extracts sample identifiers from the `.sample` file and constructs all possible **pairwise sample combinations**.
+
+---
+
+#### Segment aggregation
+
+For each pair of individuals, the script aggregates GERMLINE2 segment output to compute summary statistics:
+
+| Metric | Description |
+|------|-------------|
+| Number of shared segments | Count of detected IBD segments |
+| Total shared length | Sum of shared segment lengths |
+| Maximum segment length | Longest detected segment |
+| Mean segment length | Average length of segments |
+
+These aggregated values allow GERMLINE2 results to be summarized at the **pair level**, making them comparable to PLINK’s pairwise relatedness metrics.
+
+---
+
+#### IBD state estimation
+
+When haploid mode output is provided, the script estimates the probabilities of the three IBD states:
+
+| State | Interpretation |
+|------|---------------|
+| **P(IBD = 0)** | No shared haplotypes |
+| **P(IBD = 1)** | One haplotype shared |
+| **P(IBD = 2)** | Two haplotypes shared |
+
+These probabilities are estimated from haplotype-level segment overlap and normalized by the approximate chromosome length obtained from the genetic map.
+
+---
+
+#### Output files
+
+The script produces the following files:
+
+| File | Description |
+|-----|-------------|
+| `pairwise_ibd.csv` | Pair-level summary statistics from GERMLINE2 segments |
+| `pairwise_ibd012.csv` | Estimated IBD state probabilities |
+| `segment_summary.csv` | Distribution statistics of detected segments |
+
+These outputs provide a consistent format for comparing GERMLINE2 results with PLINK and Refined IBD.
+
+---
+
+#### Running the analysis script
+
+The analysis can be executed using:
+python3 analyze_germline2.py \
+--prefix data_raw/chr22_g2_out \
+--hap_prefix data_raw/chr22_g2_out_hap \
+--map data_raw/chr22_g2.map \
+--sample data_raw/chr22_g2.sample \
+--outdir results
+
+| Argument | Description |
+|----------|-------------|
+| `--prefix` | GERMLINE2 diploid segment output |
+| `--hap_prefix` | GERMLINE2 haploid output |
+| `--map` | Genetic map file |
+| `--sample` | Sample identifier file |
+| `--outdir` | Directory for output summaries |
+
+---
+
+### Results
+
+GERMLINE2 outputs individual **IBD segments** with the following structure:
+
+| Column | Description |
+|------|-------------|
+| ID1 | Individual 1 |
+| ID2 | Individual 2 |
+| P0 | Segment start position (bp) |
+| P1 | Segment end position (bp) |
+| cM | Segment length |
+| #words | Number of seed matches |
+| #gaps | Allowed mismatches |
+
+Example segment:
+NA18632.0 NA18530.1 28342752 29035817 0.693 264 10
+This indicates a shared haplotype segment approximately **0.69 Mb long** on chromosome 22.
+
+---
+
+### Metrics for Benchmarking
+
+GERMLINE2 produces segment-level outputs that can be aggregated to generate pairwise statistics comparable to PLINK.
+
+| Metric | Source | Description |
+|------|-------|-------------|
+| Segment count per pair | GERMLINE2 output | Number of detected IBD segments |
+| Segment length | GERMLINE2 output | Length of each segment |
+| Total shared length | Aggregated segments | Sum of segment lengths |
+| P(IBD ≥1) | Shared length / chromosome length | Probability of sharing |
+| P(IBD = 0,1,2) | Haploid mode segments | Estimated IBD states |
+
+Segment-level statistics also enable comparisons with other haplotype-based methods such as **Refined IBD**.
+
+---
+
+### Computational Performance
+
+GERMLINE2 processed the chromosome 22 dataset efficiently despite the large number of markers.
+
+| Analysis | Runtime | Input Size |
+|---------|--------|-----------|
+| GERMLINE2 diploid detection | ~11 seconds | 1.11M SNPs |
+| GERMLINE2 haploid detection | ~9 seconds | 1.11M SNPs |
+
+The hash-based seed-and-extend algorithm enables fast scanning of large haplotype datasets.
+
+---
+
+### Upcoming Action Items
+
+#### Incorporating a recombination map
+
+In the current analysis, genetic distance was approximated using physical position in megabases. As a next step, we plan to obtain a **high-resolution recombination map for chromosome 22** (e.g., from the HapMap or 1000 Genomes genetic maps) so that segment lengths can be measured using accurate centimorgan distances rather than approximate physical distances.
+
+Using a proper recombination map should improve the biological accuracy of detected segment lengths and provide more reliable IBD state estimates.
+
+---
+
+#### Parameter tuning
+
+GERMLINE2 performance depends strongly on parameter selection. Future work will explore:
+
+- **Minimum match length (-m)**  
+  Evaluate thresholds between **0.1–2.0 Mb**
+
+- **Allowed gaps (-g)**  
+  Test values between **2–8**
+
+- **Minor allele frequency filter (-f)**  
+  Evaluate filtering of rare variants
+
+The goal is to balance **sensitivity and specificity** of IBD detection.
+
+---
+
+#### Expanding genomic scope
+
+Current results use only **chromosome 22**. Future analyses may include:
+
+- Additional chromosomes  
+- Whole-genome analysis  
+- Cross-chromosome consistency checks  
+
+---
+
+#### Increasing sample coverage
+
+The dataset currently includes **230 individuals**. Future analyses may evaluate:
+
+- Additional individuals from the 1000 Genomes dataset  
+- Population-specific subsets  
+- Effects of sample size on IBD detection sensitivity  
+
+---
+
+#### Cross-method comparison
+
+The final stage will compare results from three approaches:
+
+| Method | Type |
+|------|------|
+| **PLINK** | Allele-frequency relatedness estimation |
+| **GERMLINE2** | Haplotype segment detection |
+| **Refined IBD** | Probabilistic haplotype inference |
+
+Comparison metrics will include:
+
+- Pairwise relatedness estimates  
+- Segment length distributions  
+- Total shared genomic length  
+- Agreement between methods  
+- Computational runtime and scalability
 
 ---
 
