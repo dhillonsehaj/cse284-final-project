@@ -2,15 +2,24 @@
 data_raw/*.vcf.gz
 data_raw/*.vcf.gz.tbi
 data_raw/*.vcf.gz.csi
-
-# Tool binaries/archives
-*.zip
+data_raw/*.panel
+data_raw/*.zip
 
 # PLINK binary/intermediate files
 data_qc/*.bed
 data_qc/*.bim
 data_qc/*.fam
 data_qc/*.log
+data_qc/*.pgen
+data_qc/*.psam
+data_qc/*.pvar
+data_qc/*.pvar.zst
+data_qc/*.vcf.gz
+data_qc/*.vcf.gz.csi
+data_qc/merge_list.txt
+
+# Tool binaries/archives
+*.zip
 
 # Logs
 logs/

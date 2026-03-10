@@ -20,50 +20,65 @@ The data comes from the [1000 Genomes Project](https://www.internationalgenome.o
 
 ### Subset Used
 
-To limit computational load, we use **chromosome 22** from the Phase 3 v5b release:
-- **File**: `ALL.chr22.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz`
-- **Intended subset**: 350 individuals selected from the sample manifest
-- **Actual subset**: 230 individuals (after filtering against samples present in the VCF)
+To limit computational load, we use **chromosomes 20, 21, and 22** from the Phase 3 v5b release:
+- **Files**: `ALL.chr{20,21,22}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz`
+- **Sample panel**: `integrated_call_samples_v3.20130502.ALL.panel`
+- **Intended subset**: 1,000 individuals randomly selected from the sample panel
+- **Actual subset**: 1,000 individuals (all present in the VCFs)
 
 ### Data Processing and Quality Control
 
-1. **Sample selection**: 350 samples of interest were selected from the 1000 Genomes sample info file (`20130606_sample_info.txt`). After cross-referencing with the VCF header, 230 samples were retained.
+The full pipeline is implemented in `scripts/run_3chr_1000.sh` and can be reproduced by running:
 
-2. **VCF subsetting**: The chr22 VCF was subset to the 230 samples using `bcftools view --samples-file`.
+```bash
+conda activate ibd_env
+bash scripts/run_3chr_1000.sh
+```
 
-3. **Normalization**: Multiallelic variants were split into biallelic records using `bcftools norm -m -both` to avoid downstream issues.
+Steps performed by the script:
 
-4. **PLINK conversion**: The normalized VCF was converted to PLINK binary format (`.bed/.bim/.fam`) using PLINK2.
+1. **Download**: VCFs, tabix indices, and sample panel are downloaded from the 1000 Genomes FTP (skipped if already present).
 
-5. **Quality control filters** (applied via PLINK2):
+2. **Sample selection**: 1,000 sample IDs are randomly selected from the panel file.
+
+3. **VCF subsetting**: Each chromosome VCF is subset to the selected samples using `bcftools view -S`.
+
+4. **Normalization**: Multiallelic variants are split into biallelic records using `bcftools norm -m -both`.
+
+5. **PLINK conversion**: Normalized VCFs are converted to PLINK binary format (`.bed/.bim/.fam`) using PLINK2.
+
+6. **Quality control filters** (applied via PLINK2):
    - Remove SNPs with >2% missing genotypes (`--geno 0.02`)
    - Remove individuals with >2% missing genotypes (`--mind 0.02`)
    - Remove variants with minor allele frequency <5% (`--maf 0.05`)
 
-6. **LD pruning**: Skipped due to duplicate variant IDs in the dataset and small sample size.
+7. **Variant ID assignment**: Missing variant IDs (`.`) are replaced with unique identifiers using `--set-missing-var-ids` to avoid merge conflicts.
 
-**Final QC'd dataset**: 230 samples × 118,164 biallelic SNPs on chromosome 22.
+8. **Chromosome merging**: The three per-chromosome QC'd files are merged into a single dataset using `--pmerge-list`.
+
+**Final QC'd dataset**: 1,000 samples × 401,845 biallelic SNPs across chromosomes 20, 21, and 22.
 
 ### File Structure
 
 ```
 data_raw/           Raw and intermediate data files
-  20130606_sample_info.txt          1000 Genomes sample manifest
-  selected_samples.txt              Initial 350-sample selection
-  final_samples_filtered.txt        230 samples present in VCF
-  vcf_samples.txt                   Sample IDs from VCF header
+  integrated_call_samples_v3.20130502.ALL.panel   1000 Genomes sample panel
+  final_samples_1000.txt            1,000 randomly selected sample IDs
+  ALL.chr{20,21,22}...vcf.gz        Downloaded VCFs (gitignored)
 
 data_qc/            Quality-controlled PLINK files
-  chr22_qc.bed / .bim / .fam       Final QC'd binary genotype data
-  chr22_subset.bed / .bim / .fam    Pre-QC binary genotype data
+  chr{20,21,22}_qc.bed/.bim/.fam    Per-chromosome QC'd binary genotype data
+  chr{20,21,22}_qc_ids.bed/.bim/.fam Per-chromosome with unique variant IDs
+  merged_3chr_1000.bed/.bim/.fam    Merged 3-chromosome QC'd dataset
 
 results/            Analysis outputs
-  plink_king.kin0                   PLINK2 KING kinship estimates
-  chr22_genome.genome               PLINK 1.9 IBD proportions (Z0/Z1/Z2/PI_HAT)
-  plink_results_summary.txt         Summary of PLINK metrics and results
-  results_guide.txt                 Column definitions and format guide
+  king_3chr_1000.kin0               PLINK2 KING kinship estimates (1000 samples)
+  relatives_detected.txt            Pairs with kinship > 0.0442
 
-scripts/            Analysis scripts
+scripts/            Analysis and pipeline scripts
+  run_3chr_1000.sh                  End-to-end pipeline: download, QC, merge, KING
+  analyze_germline2.py              GERMLINE2 post-processing and analysis
+  analyze_refinedibd.py             Refined IBD post-processing and analysis
 ```
 
 ---
@@ -72,45 +87,44 @@ scripts/            Analysis scripts
 
 ### Approach
 
-PLINK estimates pairwise relatedness directly from unphased genotype data, without requiring haplotype phasing. We ran two complementary analyses:
-
-1. **PLINK2 KING-robust kinship** (`--make-king-table`): Computes the KING-robust kinship estimator for all sample pairs. This method is robust to population structure and provides a single kinship coefficient per pair.
-
-2. **PLINK 1.9 method-of-moments IBD** (`--genome`): Estimates the proportions of the genome shared IBD=0, IBD=1, and IBD=2 (Z0, Z1, Z2) for all sample pairs using a method-of-moments approach, along with the overall IBD proportion (PI_HAT = Z1/2 + Z2).
+PLINK estimates pairwise relatedness directly from unphased genotype data, without requiring haplotype phasing. We use **PLINK2 KING-robust kinship** (`--make-king-table`), which computes the KING-robust kinship estimator for all sample pairs. This method is robust to population structure and provides a single kinship coefficient per pair.
 
 ### Commands
 
-```bash
-# KING-robust kinship (PLINK2 v2.0.0-a.7 M1)
-plink2 --bfile data_qc/chr22_qc --make-king-table --out results/plink_king
+The full pipeline (download, QC, merge, KING) is automated in `scripts/run_3chr_1000.sh`. The key PLINK2 commands are:
 
-# Method-of-moments IBD proportions (PLINK 1.9.0-b.7.11)
-plink --bfile data_qc/chr22_qc --genome --out results/chr22_genome
+```bash
+# Per-chromosome QC
+plink2 --vcf data_qc/chr${chr}_subset_biallelic.vcf.gz --make-bed --out data_qc/chr${chr}_subset
+plink2 --bfile data_qc/chr${chr}_subset --geno 0.02 --mind 0.02 --maf 0.05 --make-bed --out data_qc/chr${chr}_qc
+
+# Assign unique variant IDs and merge chromosomes
+plink2 --bfile data_qc/chr${chr}_qc --set-missing-var-ids '@:#:$r:$a' --new-id-max-allele-len 500 --make-bed --out data_qc/chr${chr}_qc_ids
+plink2 --bfile data_qc/chr20_qc_ids --pmerge-list data_qc/merge_list.txt bfile --make-bed --out data_qc/merged_3chr_1000
+
+# KING-robust kinship
+plink2 --bfile data_qc/merged_3chr_1000 --make-king-table --out results/king_3chr_1000
 ```
 
 ### Results
 
-**26,335 pairwise comparisons** were computed (all pairs among 230 samples).
+**499,500 pairwise comparisons** were computed (all pairs among 1,000 samples across chromosomes 20, 21, and 22).
 
-KING kinship summary:
-| Statistic | Value |
-|-----------|-------|
-| Mean kinship | -0.1550 |
-| Max kinship | 0.0932 |
-| Min kinship | -0.4720 |
-| Pairs with kinship > 0.0442 (3rd degree+) | 255 |
-| Pairs with kinship > 0.0884 (2nd degree+) | 0 |
-| Pairs with kinship > 0.177 (1st degree+) | 0 |
+- Samples selected: 1,000
+- Samples kept after QC: 1,000 (0 removed by `--mind 0.02`)
+- Variants after QC: chr20: 172,665 / chr21: 116,095 / chr22: 113,085
+- Total merged variants: 401,845
 
-IBD proportions summary:
-| Statistic | Value |
-|-----------|-------|
-| Mean PI_HAT | 0.0384 |
-| Max PI_HAT | 0.3012 |
-| Pairs with PI_HAT > 0.125 | 4,530 |
-| Pairs with PI_HAT > 0.25 | 277 |
+KING kinship results:
+| Relationship category | Kinship threshold | Pairs detected |
+|-----------------------|-------------------|----------------|
+| 1st degree | > 0.177 | 1 |
+| 2nd degree | 0.0884 – 0.177 | 1 |
+| 3rd degree | 0.0442 – 0.0884 | 321 |
+| Unrelated | < 0.0442 | 499,177 |
+| **Total related pairs** | **> 0.0442** | **323** |
 
-No close relatives (1st or 2nd degree) were detected by KING kinship. The 255 pairs exceeding the 3rd-degree threshold are consistent with population substructure among 1000 Genomes samples rather than true recent relatedness.
+Top kinship value: **0.2446** (1st-degree relative pair). All 323 related pairs are written to `results/relatives_detected.txt`.
 
 ### Metrics for Benchmarking
 
@@ -118,22 +132,17 @@ PLINK provides the following **pair-level metrics** that are directly comparable
 
 | Metric | Source | Column |
 |--------|--------|--------|
-| Kinship coefficient | `plink_king.kin0` | KINSHIP |
-| P(IBD=0) | `chr22_genome.genome` | Z0 |
-| P(IBD=1) | `chr22_genome.genome` | Z1 |
-| P(IBD=2) | `chr22_genome.genome` | Z2 |
-| Total IBD sharing | `chr22_genome.genome` | PI_HAT |
-| Number of IBD pairs | Derived from thresholds on KINSHIP or PI_HAT | — |
-| IBS distance | `chr22_genome.genome` | DST |
+| Kinship coefficient | `king_3chr_1000.kin0` | KINSHIP |
+| Number of IBD pairs | Derived from thresholds on KINSHIP | — |
 
 **Note**: PLINK does not produce segment-level output (individual IBD segments with genomic coordinates). Segment-level comparisons (segment counts, length distributions, genomic overlap, Jaccard similarity) will only be evaluated between GERMLINE and Refined IBD.
 
 ### Computational Performance
 
-| Analysis | Runtime | Memory Reserved | Threads |
-|----------|---------|-----------------|---------|
-| PLINK2 KING | < 1 second | 8,192 MiB | 8 |
-| PLINK 1.9 --genome | < 1 second | 8,192 MB | 8 |
+| Analysis | Runtime | Threads |
+|----------|---------|---------|
+| Full pipeline (download + QC + merge + KING) | ~7 min | 8 |
+| KING kinship only | ~2 seconds | 8 |
 
 ---
 

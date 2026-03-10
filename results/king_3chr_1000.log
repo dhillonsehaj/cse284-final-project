@@ -1,0 +1,23 @@
+PLINK v2.0.0-a.7 M1 (28 Feb 2026)
+Options in effect:
+  --bfile data_qc/merged_3chr_1000
+  --make-king-table
+  --out results/king_3chr_1000
+
+Hostname: Sergis-Air.lan1
+Working directory: /Users/sergimarsol/Desktop/UCSD/Winter 2026/Bioinformatics/project/cse284-final-project
+Start time: Mon Mar  9 18:45:13 2026
+
+Random number seed: 1773107113
+16384 MiB RAM detected; reserving 8192 MiB for main workspace.
+Using up to 8 compute threads.
+1000 samples (0 females, 0 males, 1000 ambiguous; 1000 founders) loaded from
+data_qc/merged_3chr_1000.fam.
+401845 variants loaded from data_qc/merged_3chr_1000.bim.
+Note: No phenotype data present.
+--make-king-table pass 1/1: Scanning for rare variants... done.
+0 variants handled by initial scan (401845 remaining).
+--make-king-table: 401845 variants processed.
+Results written to results/king_3chr_1000.kin0 .
+
+End time: Mon Mar  9 18:45:15 2026
