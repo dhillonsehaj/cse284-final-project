@@ -73,6 +73,7 @@ data_qc/            Quality-controlled PLINK files
 
 results/            Analysis outputs
   king_3chr_1000.kin0               PLINK2 KING kinship estimates (1000 samples)
+  genome_3chr_1000.genome           PLINK 1.9 --genome IBD estimates (Z0/Z1/Z2/PI_HAT)
   relatives_detected.txt            Pairs with kinship > 0.0442
 
 scripts/            Analysis and pipeline scripts
@@ -91,7 +92,7 @@ PLINK estimates pairwise relatedness directly from unphased genotype data, witho
 
 ### Commands
 
-The full pipeline (download, QC, merge, KING) is automated in `scripts/run_3chr_1000.sh`. The key PLINK2 commands are:
+The full pipeline (download, QC, merge, KING, --genome) is automated in `scripts/run_3chr_1000.sh`. The key commands are:
 
 ```bash
 # Per-chromosome QC
@@ -102,8 +103,11 @@ plink2 --bfile data_qc/chr${chr}_subset --geno 0.02 --mind 0.02 --maf 0.05 --mak
 plink2 --bfile data_qc/chr${chr}_qc --set-missing-var-ids '@:#:$r:$a' --new-id-max-allele-len 500 --make-bed --out data_qc/chr${chr}_qc_ids
 plink2 --bfile data_qc/chr20_qc_ids --pmerge-list data_qc/merge_list.txt bfile --make-bed --out data_qc/merged_3chr_1000
 
-# KING-robust kinship
+# KING-robust kinship (PLINK2)
 plink2 --bfile data_qc/merged_3chr_1000 --make-king-table --out results/king_3chr_1000
+
+# Method-of-moments IBD estimation (PLINK 1.9)
+plink --bfile data_qc/merged_3chr_1000 --genome --out results/genome_3chr_1000
 ```
 
 ### Results
@@ -115,7 +119,8 @@ plink2 --bfile data_qc/merged_3chr_1000 --make-king-table --out results/king_3ch
 - Variants after QC: chr20: 172,665 / chr21: 116,095 / chr22: 113,085
 - Total merged variants: 401,845
 
-KING kinship results:
+#### KING-robust Kinship (PLINK2)
+
 | Relationship category | Kinship threshold | Pairs detected |
 |-----------------------|-------------------|----------------|
 | 1st degree | > 0.177 | 1 |
@@ -124,7 +129,22 @@ KING kinship results:
 | Unrelated | < 0.0442 | 499,177 |
 | **Total related pairs** | **> 0.0442** | **323** |
 
-Top kinship value: **0.2446** (1st-degree relative pair). All 323 related pairs are written to `results/relatives_detected.txt`.
+Top kinship value: **0.2446** (pair NA20320–NA20321, 1st-degree relatives). All 323 related pairs are written to `results/relatives_detected.txt`.
+
+#### Method-of-Moments IBD (PLINK 1.9 `--genome`)
+
+The `--genome` command estimates IBD state probabilities (Z0, Z1, Z2) and the proportion of genome shared IBD (PI_HAT) for every pair using a method-of-moments approach. These metrics provide a finer-grained view of relatedness compared to KING's single kinship coefficient.
+
+| Relationship category | PI_HAT threshold | Pairs detected |
+|-----------------------|------------------|----------------|
+| 1st degree | ≥ 0.5 | 1 |
+| 2nd degree | 0.25 – 0.5 | 36 |
+| 3rd degree | 0.125 – 0.25 | 29,428 |
+| Unrelated | < 0.0625 | 414,300 |
+
+**Top pair**: NA20320–NA20321 with PI_HAT = 0.5049, Z0 = 0.0172, Z1 = 0.9558, Z2 = 0.0270. The very high Z1 and near-zero Z0/Z2 are consistent with a **parent-child relationship** (expected: Z0=0, Z1=1, Z2=0).
+
+Both methods agree on the top pair (NA20320–NA20321). However, the --genome method detects more pairs at lower relatedness thresholds, while KING's robust estimator is more conservative and better handles population structure.
 
 ### Metrics for Benchmarking
 
@@ -133,7 +153,11 @@ PLINK provides the following **pair-level metrics** that are directly comparable
 | Metric | Source | Column |
 |--------|--------|--------|
 | Kinship coefficient | `king_3chr_1000.kin0` | KINSHIP |
-| Number of IBD pairs | Derived from thresholds on KINSHIP | — |
+| P(IBD=0) | `genome_3chr_1000.genome` | Z0 |
+| P(IBD=1) | `genome_3chr_1000.genome` | Z1 |
+| P(IBD=2) | `genome_3chr_1000.genome` | Z2 |
+| Proportion IBD | `genome_3chr_1000.genome` | PI_HAT |
+| Number of IBD pairs | Derived from thresholds on KINSHIP or PI_HAT | — |
 
 **Note**: PLINK does not produce segment-level output (individual IBD segments with genomic coordinates). Segment-level comparisons (segment counts, length distributions, genomic overlap, Jaccard similarity) will only be evaluated between GERMLINE and Refined IBD.
 
@@ -141,8 +165,9 @@ PLINK provides the following **pair-level metrics** that are directly comparable
 
 | Analysis | Runtime | Threads |
 |----------|---------|---------|
-| Full pipeline (download + QC + merge + KING) | ~7 min | 8 |
+| Full pipeline (download + QC + merge + KING + --genome) | ~7 min | 8 |
 | KING kinship only | ~2 seconds | 8 |
+| `--genome` only | ~1.5 seconds | 8 |
 
 ---
 

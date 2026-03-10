@@ -84,14 +84,20 @@ plink2 \
   --make-bed \
   --out "$DATAQC/merged_3chr_1000"
 
-# Step 7: Run KING to detect relatives
+# Step 7: Run KING to detect relatives (PLINK2)
 plink2 \
   --bfile "$DATAQC/merged_3chr_1000" \
   --make-king-table \
   --out "$RESULTS/king_3chr_1000"
 
-# Step 8: List putative relatives (3rd-degree or closer, kinship > 0.0442)
+# Step 8: Run method-of-moments IBD estimation (PLINK 1.9)
+plink \
+  --bfile "$DATAQC/merged_3chr_1000" \
+  --genome \
+  --out "$RESULTS/genome_3chr_1000"
+
+# Step 9: List putative relatives (3rd-degree or closer, kinship > 0.0442)
 awk 'NR>1 && $NF>0.0442 {print $1, $2, $3, $4, $NF}' "$RESULTS/king_3chr_1000.kin0" > "$RESULTS/relatives_detected.txt"
 echo "Pairs of putative relatives written to $RESULTS/relatives_detected.txt"
 
-echo "All steps complete. KING table and relatives list are ready."
+echo "All steps complete. KING table, IBD estimates, and relatives list are ready."
