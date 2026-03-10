@@ -1,0 +1,35 @@
+refined-ibd.17Jan20.102.jar
+Copyright (C) 2014-2017 Brian L. Browning
+Enter java -jar refined-ibd.17Jan20.102.jar to list command line argument
+Start time: 11:56 PM PDT on 09 Mar 2026
+
+Command line: java -Xmx16384m -jar refined-ibd.17Jan20.102.jar
+  gt=results/chr21_phased.vcf.gz
+  out=results/chr21_refinedibd
+  nthreads=8
+  lod=1.0
+  length=0.5
+
+No genetic map is specified: using 1 cM = 1 Mb
+
+Samples:                 1,000      
+Model scale:             3.16       
+
+Window 1 (21:9411239-48119740)
+Markers:                 1,104,408  
+Model construction:      7 minutes 49 seconds
+IBD detection:           1 minute 47 seconds
+Total time:              9 minutes 37 seconds
+
+mean edges/level: 13     max edges/level: 33
+mean edges/node:  1.082  mean count/edge: 154
+
+Cumulative Statistics:
+
+Markers:                 1,104,408  
+Model construction:      7 minutes 49 seconds
+IBD detection:           1 minute 47 seconds
+Total time:              9 minutes 43 seconds
+
+End time: 12:06 AM PDT on 10 Mar 2026
+refined-ibd.17Jan20.102.jar finished

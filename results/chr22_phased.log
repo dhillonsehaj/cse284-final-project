@@ -1,0 +1,27 @@
+beagle.27Feb25.75f.jar (version 5.5)
+Copyright (C) 2014-2024 Brian L. Browning
+Enter "java -jar beagle.27Feb25.75f.jar" to list command line argument
+Start time: 11:38 PM PDT on 09 Mar 2026
+
+Command line: java -Xmx8192m -jar beagle.27Feb25.75f.jar
+  gt=data_qc/chr22_subset_biallelic_nomiss_dedup.vcf.gz
+  out=results/chr22_phased
+  nthreads=8
+
+No genetic map is specified: using 1 cM = 1 Mb
+
+Reference samples:                    0
+Study     samples:                1,000
+
+Window 1 [22:16050075-51244237]
+Study     markers:            1,102,381
+Stage 1   markers:              346,411
+
+Cumulative Statistics:
+
+Study     markers:            1,102,381
+
+Total time:                    31 seconds
+
+End time: 11:39 PM PDT on 09 Mar 2026
+beagle.27Feb25.75f.jar finished

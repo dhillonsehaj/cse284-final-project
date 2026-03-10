@@ -37,10 +37,23 @@ IBD-state approximation details:
 
 Usage:
   python3 scripts/analyze_refinedibd.py \
-    --ibd results/refinedibd/chr22_refinedibd.ibd.gz \
-    --outdir results \
+    --ibd results/chr20_refinedibd.ibd.gz \
+    --outdir results/chr20 \
     --min_lod 1.0 \
     --min_cm 0.5
+
+  python3 scripts/analyze_refinedibd.py \
+    --ibd results/chr21_refinedibd.ibd.gz \
+    --outdir results/chr21 \
+    --min_lod 1.0 \
+    --min_cm 0.5
+
+  python3 scripts/analyze_refinedibd.py \
+    --ibd results/chr22_refinedibd.ibd.gz \
+    --outdir results/chr22 \
+    --min_lod 1.0 \
+    --min_cm 0.5
+
 
 Optional:
   --chr_len_cm <float>   Override chromosome length in cM used for probabilities.
