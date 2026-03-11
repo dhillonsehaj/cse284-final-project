@@ -4,6 +4,8 @@ data_raw/*.vcf.gz.tbi
 data_raw/*.vcf.gz.csi
 data_raw/*.panel
 data_raw/*.zip
+data_raw/*.hap
+data_raw/*.hap.gz
 
 # PLINK binary/intermediate files
 data_qc/*.bed

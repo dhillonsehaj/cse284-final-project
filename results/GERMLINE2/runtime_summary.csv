@@ -1,0 +1,7 @@
+chromosome,mode,elapsed_time_raw,elapsed_seconds,user_time_s,system_time_s,max_memory_kb,max_memory_mb,exit_status
+chr20,diploid,mm:ss or m:ss): 5:08.73,,35.25,11.51,31396.0,30.66015625,0
+chr21,diploid,mm:ss or m:ss): 3:03.78,,20.93,6.43,25604.0,25.00390625,0
+chr22,diploid,mm:ss or m:ss): 3:03.65,,20.07,6.51,22948.0,22.41015625,0
+chr20,haploid,mm:ss or m:ss): 5:55.67,,48.55,12.23,46488.0,45.3984375,0
+chr21,haploid,mm:ss or m:ss): 3:37.57,,29.75,7.84,60512.0,59.09375,0
+chr22,haploid,mm:ss or m:ss): 3:23.68,,25.65,7.41,53212.0,51.96484375,0
