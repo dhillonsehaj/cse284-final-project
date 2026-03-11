@@ -773,3 +773,30 @@ These metrics enable:
 * **segment-level comparison with GERMLINE2**
 * **pairwise relatedness comparison with PLINK**
 * **runtime and scalability benchmarking across methods**
+
+---
+
+## Benchmarking Plots
+
+Five comparison plots are generated to evaluate agreement and differences across the three IBD detection methods. All scripts are in `scripts/` and output figures to `plots/`.
+
+### How to Run
+
+```bash
+cd cse284-final-project
+python3 scripts/plot1_upset_overlap.py
+python3 scripts/plot2_z0_z1_scatter.py
+python3 scripts/plot3_segment_length.py
+python3 scripts/plot4_kinship_scatter.py
+python3 scripts/plot5_jaccard.py
+```
+
+### Plot Descriptions
+
+| Plot | Script | Description |
+|------|--------|-------------|
+| **Plot 1** – UpSet Overlap | `plot1_upset_overlap.py` | UpSet plot showing which IBD pairs are detected by each method and their overlaps. |
+| **Plot 2** – Z0/Z1 & Shared cM | `plot2_z0_z1_scatter.py` | Two-panel: PLINK Z0 vs Z1 scatter with relationship reference points (left), GERMLINE2 vs Refined IBD total shared cM histogram (right). |
+| **Plot 3** – Segment Length Distribution | `plot3_segment_length.py` | Overlaid histograms of IBD segment lengths (cM and Mb) for GERMLINE2 and Refined IBD. PLINK does not produce segment-level data. |
+| **Plot 4** – Kinship Scatter | `plot4_kinship_scatter.py` | Three-panel pairwise kinship comparison: PLINK vs GERMLINE2, PLINK vs Refined IBD, GERMLINE2 vs Refined IBD. |
+| **Plot 5** – Segment Overlap (Jaccard) | `plot5_jaccard.py` | Per-chromosome IBD coverage bar chart, segment position map on chr20, and Jaccard similarity summary for GERMLINE2 vs Refined IBD. |
