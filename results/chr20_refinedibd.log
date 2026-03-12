@@ -1,7 +1,7 @@
 refined-ibd.17Jan20.102.jar
 Copyright (C) 2014-2017 Brian L. Browning
 Enter java -jar refined-ibd.17Jan20.102.jar to list command line argument
-Start time: 11:39 PM PDT on 09 Mar 2026
+Start time: 04:33 PM PDT on 11 Mar 2026
 
 Command line: java -Xmx16384m -jar refined-ibd.17Jan20.102.jar
   gt=results/chr20_phased.vcf.gz
@@ -17,28 +17,28 @@ Model scale:             3.16
 
 Window 1 (20:60343-40060263)
 Markers:                 1,087,399  
-Model construction:      8 minutes 15 seconds
-IBD detection:           2 minutes 27 seconds
-Total time:              10 minutes 42 seconds
+Model construction:      7 minutes 59 seconds
+IBD detection:           2 minutes 6 seconds
+Total time:              10 minutes 4 seconds
 
-mean edges/level: 13     max edges/level: 35
-mean edges/node:  1.076  mean count/edge: 154
+mean edges/level: 13     max edges/level: 34
+mean edges/node:  1.079  mean count/edge: 154
 
 Window 2 (20:38810256-62965354)
 Markers:                 759,182    
-Model construction:      5 minutes 31 seconds
-IBD detection:           1 minute 17 seconds
-Total time:              6 minutes 48 seconds
+Model construction:      5 minutes 28 seconds
+IBD detection:           1 minute 13 seconds
+Total time:              6 minutes 41 seconds
 
 mean edges/level: 13     max edges/level: 35
-mean edges/node:  1.081  mean count/edge: 154
+mean edges/node:  1.083  mean count/edge: 154
 
 Cumulative Statistics:
 
 Markers:                 1,811,167  
-Model construction:      13 minutes 47 seconds
-IBD detection:           3 minutes 43 seconds
-Total time:              17 minutes 37 seconds
+Model construction:      13 minutes 26 seconds
+IBD detection:           3 minutes 19 seconds
+Total time:              16 minutes 51 seconds
 
-End time: 11:56 PM PDT on 09 Mar 2026
+End time: 04:50 PM PDT on 11 Mar 2026
 refined-ibd.17Jan20.102.jar finished

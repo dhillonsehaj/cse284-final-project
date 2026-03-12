@@ -32,8 +32,8 @@ PANEL="$DATARAW/integrated_call_samples_v3.20130502.ALL.panel"
 
 # Step 2: Select 1000 random sample IDs (skip header, extract sample column)
 SAMPLES="$DATARAW/final_samples_1000.txt"
-tail -n +2 "$PANEL" | cut -f1 | shuf | head -n 1000 > "$SAMPLES"
-echo "Selected $(wc -l < "$SAMPLES") sample IDs"
+# tail -n +2 "$PANEL" | cut -f1 | shuf | head -n 1000 > "$SAMPLES"
+# echo "Selected $(wc -l < "$SAMPLES") sample IDs"
 
 # Step 3: Subset VCFs to selected samples & normalize to biallelic
 for chr in 20 21 22; do

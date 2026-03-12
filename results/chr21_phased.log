@@ -1,7 +1,7 @@
 beagle.27Feb25.75f.jar (version 5.5)
 Copyright (C) 2014-2024 Brian L. Browning
 Enter "java -jar beagle.27Feb25.75f.jar" to list command line argument
-Start time: 11:38 PM PDT on 09 Mar 2026
+Start time: 04:32 PM PDT on 11 Mar 2026
 
 Command line: java -Xmx8192m -jar beagle.27Feb25.75f.jar
   gt=data_qc/chr21_subset_biallelic_nomiss_dedup.vcf.gz
@@ -15,13 +15,13 @@ Study     samples:                1,000
 
 Window 1 [21:9411239-48119740]
 Study     markers:            1,104,408
-Stage 1   markers:              347,199
+Stage 1   markers:              343,242
 
 Cumulative Statistics:
 
 Study     markers:            1,104,408
 
-Total time:                    33 seconds
+Total time:                    28 seconds
 
-End time: 11:38 PM PDT on 09 Mar 2026
+End time: 04:33 PM PDT on 11 Mar 2026
 beagle.27Feb25.75f.jar finished
