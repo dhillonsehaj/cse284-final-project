@@ -28,10 +28,15 @@ PANEL="$DATARAW/integrated_call_samples_v3.20130502.ALL.panel"
 [ -f "$PANEL" ] || wget -P "$DATARAW" \
   "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel"
 
-# Step 2: Select 1000 random sample IDs (skip header, extract sample column)
+# Step 2: Use fixed 1000-sample list for reproducibility.
+# If missing, create it once from the panel.
 SAMPLES="$DATARAW/final_samples_1000.txt"
-tail -n +2 "$PANEL" | cut -f1 | shuf | head -n 1000 > "$SAMPLES"
-echo "Selected $(wc -l < "$SAMPLES") sample IDs"
+if [ ! -f "$SAMPLES" ]; then
+  tail -n +2 "$PANEL" | cut -f1 | shuf | head -n 1000 > "$SAMPLES"
+  echo "Created sample list: $SAMPLES ($(wc -l < "$SAMPLES") IDs)"
+else
+  echo "Using existing sample list: $SAMPLES ($(wc -l < "$SAMPLES") IDs)"
+fi
 
 # Step 3: Subset VCFs to selected samples & normalize to biallelic
 for chr in 20 21 22; do
