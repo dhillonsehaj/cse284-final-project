@@ -1,6 +1,6 @@
 # CSE 284 Final Project — Reproducibility Guide (PLINK, GERMLINE2, Refined IBD)
 
-This README is a **run guide for reviewers**. It focuses on:
+This README is a run guide for reproducing the analysis. It focuses on:
 - how to install dependencies,
 - how to run each method,
 - where outputs are written,
@@ -25,7 +25,7 @@ All analyses in this repository are run on:
 
 ---
 
-## 2) Project structure (reviewer-relevant)
+## 2) Project structure
 
 ```text
 cse284-final-project/
@@ -53,6 +53,24 @@ cse284-final-project/
     plot5_jaccard.py
   plots/                    generated benchmark figures
 ```
+
+### Main output files by method (brief)
+
+- **PLINK (KING + --genome)**
+  - `results/king_3chr_1000.kin0`: pairwise KING kinship estimates (`KINSHIP`) used for related-pair thresholding.
+  - `results/genome_3chr_1000.genome`: pairwise `Z0/Z1/Z2` and `PI_HAT` values from `--genome`.
+  - `results/relatives_detected.txt`: filtered list of pairs reported as related by the pipeline.
+
+- **GERMLINE2**
+  - `results/GERMLINE2/chr*_1000_g2_out`: diploid segment calls per chromosome.
+  - `results/GERMLINE2/chr*_1000_g2_out_hap`: haplotype-mode segment calls per chromosome.
+  - `results/GERMLINE2/pairwise_ibd.csv`: pair-level totals (segment counts and shared cM).
+  - `results/GERMLINE2/pairwise_ibd012.csv`: pair-level IBD state summary (`P_IBD0/P_IBD1/P_IBD2`) and kinship proxy.
+
+- **Beagle + Refined IBD**
+  - `results/chr*_refinedibd.ibd.gz`: per-chromosome Refined IBD segment calls.
+  - `results/refinedibd_3chr_all.ibd.gz`: merged segment calls across chr20/21/22.
+  - `results/refinedibd_3chr_pairwise_summary.tsv`: pairwise summary table used by downstream comparisons/plots.
 
 ---
 
@@ -278,7 +296,7 @@ Output files:
 
 ---
 
-## 9) Reviewer quick verification checklist
+## 9) Quick verification checklist
 
 After running pipelines/scripts, verify:
 
