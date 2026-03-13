@@ -54,7 +54,7 @@ cse284-final-project/
   plots/                    generated benchmark figures
 ```
 
-### Main output files by method (brief)
+### Main output files by method
 
 - **PLINK (KING + --genome)**
   - `results/king_3chr_1000.kin0`: pairwise KING kinship estimates (`KINSHIP`) used for related-pair thresholding.
@@ -123,7 +123,7 @@ This pipeline:
 - `results/genome_3chr_1000.genome`
 - `results/relatives_detected.txt`
 
-### Quick sanity checks (expected)
+### Quick sanity checks
 
 ```bash
 # Related pairs by KING threshold > 0.0442
@@ -205,7 +205,7 @@ python3 scripts/analyze_germline2.py \
 - `results/GERMLINE2/chr*_1000_g2_out`
 - `results/GERMLINE2/chr*_1000_g2_out_hap`
 
-### Quick sanity checks (expected)
+### Quick sanity checks
 
 ```bash
 awk 'END{print NR-1}' results/GERMLINE2/pairwise_ibd.csv
@@ -241,7 +241,7 @@ This pipeline:
 - `results/refinedibd_3chr_all.ibd.gz`
 - `results/refinedibd_3chr_pairwise_summary.tsv`
 
-### Quick sanity checks (expected)
+### Quick sanity checks
 
 ```bash
 awk 'END{print NR-1}' results/refinedibd_3chr_pairwise_summary.tsv
