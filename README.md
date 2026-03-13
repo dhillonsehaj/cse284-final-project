@@ -1,4 +1,4 @@
-# CSE 284 Final Project — Reproducibility Guide (PLINK, GERMLINE2, Refined IBD)
+# CSE 284 Final Project — Benchmarking IBD Detection Methods for Relative Finding (PLINK, GERMLINE2, Refined IBD)
 
 This README is a run guide for reproducing the analysis. It focuses on:
 - how to install dependencies,
